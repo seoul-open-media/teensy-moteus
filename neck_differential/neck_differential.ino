@@ -202,6 +202,13 @@ void loop() {
     Serial.println();
   };
 
+  const auto& v = moteus1.last_result().values;
+  const auto& p = moteus1.last_result().values;
+  if(!v.position && !p.position){
+    sendData(2, static_cast<int>(v.mode), v.position, v.abs_position, v.velocity, v.torque, v.q_current, v.d_current, v.voltage, v.temperature);
+    sendData(3, static_cast<int>(p.mode),p.position, p.abs_position, p.velocity, p.torque, p.q_current, p.d_current, p.voltage, p.temperature);
+
+  }
   // print_state();
   if(Serial.available()){
     sendData(1,0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,Serial.readStringUntil('\n').toFloat());
@@ -269,9 +276,10 @@ void loop() {
     // position_cmd1.velocity = floatsp[1];
     // position_cmd1.maximum_torque = floatsp[2];
     // position_cmd1.stop_position =  floatsp[3];
-    run(pos1, pos2);
+    run3(pos1, pos2);
       
   }
+  delay(10);
 }
 
 double GetSPIposition(Moteus a){
