@@ -52,6 +52,9 @@ Moteus::PositionMode::Command position_cmd1;
 Moteus::PositionMode::Command position_cmd2;
 Moteus::PositionMode::Format position_fmt;
 
+double pos1 = 0;
+double pos2 = 0;
+
 void setup() {
   pinMode (LED_BUILTIN, OUTPUT);
 
@@ -249,7 +252,25 @@ void loop() {
     }
     HWSERIAL.flush();
 
-    
+    Serial.print(byteData);
+    Serial.print(" ");
+    Serial.print(floatsp[0],4);
+    Serial.print(" ");
+    Serial.print(floatsp[1],4);
+    Serial.print(" ");
+    Serial.print(floatsp[2],4);
+    Serial.print(" ");
+    Serial.println(floatsp[3],4);
+    if(byteData == 2){
+      pos1 = floatsp[0];
+    }else if(byteData == 3){
+      pos2 = floatsp[0];
+    }
+    // position_cmd1.velocity = floatsp[1];
+    // position_cmd1.maximum_torque = floatsp[2];
+    // position_cmd1.stop_position =  floatsp[3];
+    run(pos1, pos2);
+      
   }
 }
 
@@ -308,6 +329,44 @@ void run2(double deg1, double deg2){
   // result2 = moteus2.SetPosition(position_cmd2, &position_fmt);
   
 }
+
+void run3(double pos1, double pos2){
+  
+  auto offset = (pos1/(2.0*M_PI) - GetI2Cposition(moteus1)) - (pos2/(2.0*M_PI) - GetI2Cposition(moteus2));
+  
+  if (offset > 1.0)
+    {
+        offset -= 1.0;
+    }
+    else if (offset < -1.0)
+    {
+        offset += 1.0;
+    }
+  
+
+  double pos_1 = GetSPIposition(moteus1)+offset;
+
+    
+  auto offset2 = (pos1/(2.0*M_PI) - GetI2Cposition(moteus1)) + (pos2/(2.0*M_PI) - GetI2Cposition(moteus2));
+  
+   if (offset2 > 1.0)
+    {
+        offset2 -= 1.0;
+    }
+    else if (offset2 < -1.0)
+    {
+        offset2 += 1.0;
+    }
+
+  double pos_2 = GetSPIposition(moteus2)+offset2;
+
+
+  setDoublePosition(pos_1, pos_2, 0.02);
+  // result1 = moteus1.SetPosition(position_cmd1, &position_fmt);
+  // result2 = moteus2.SetPosition(position_cmd2, &position_fmt);
+  
+}
+
 
 void setDoublePosition(double pos1, double pos2, double period_s){
   position_cmd1.position = pos1;
