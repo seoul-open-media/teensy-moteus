@@ -92,12 +92,12 @@ void setup() {
 
 
   position_fmt.position = Moteus::kInt16;
-  position_fmt.velocity = Moteus::kIgnore;
+  position_fmt.velocity = Moteus::kInt16;
+  position_fmt.maximum_torque = Moteus::kInt16;
   position_fmt.feedforward_torque = Moteus::kIgnore;
   position_fmt.kp_scale = Moteus::kIgnore;
   position_fmt.kd_scale = Moteus::kIgnore;
-  position_fmt.maximum_torque = Moteus::kIgnore;
-  position_fmt.stop_position = Moteus::kIgnore;
+  position_fmt.stop_position = Moteus::kInt16;
   position_fmt.velocity_limit = Moteus::kInt16;
   position_fmt.accel_limit = Moteus::kInt16;
 
@@ -116,11 +116,17 @@ auto print_state = [&]() {
     Serial.print(F(" vel="));
     Serial.print(v.velocity, 3);
     Serial.print(F(" torque="));
-    Serial.print(v.torque);
-    Serial.print(F(" trajectory_complete="));
-    Serial.print(v.trajectory_complete, 3);
-    Serial.print(F(" absPosition="));
+    Serial.print(v.torque, 3);
+    Serial.print(F(" q_current="));
+    Serial.print(v.q_current, 3);
+    Serial.print(F(" d_current="));
+    Serial.print(v.d_current, 3);
+    Serial.print(F(" abs_position="));
     Serial.print(v.abs_position, 3);
+    Serial.print(F(" motor_temperature="));
+    Serial.print(v.motor_temperature, 3);
+    Serial.print(F(" voltage="));
+    Serial.print(v.voltage, 3);
     Serial.println();
 
     const auto& p = moteus2.last_result().values;
@@ -132,10 +138,16 @@ auto print_state = [&]() {
     Serial.print(p.velocity, 3);
     Serial.print(F(" torque="));
     Serial.print(p.torque, 3);
-    Serial.print(F(" trajectory_complete="));
-    Serial.print(p.trajectory_complete, 3);
-    Serial.print(F(" absPosition="));
+    Serial.print(F(" q_current="));
+    Serial.print(p.q_current, 3);
+    Serial.print(F(" d_current="));
+    Serial.print(p.d_current, 3);
+    Serial.print(F(" abs_position="));
     Serial.print(p.abs_position, 3);
+    Serial.print(F(" motor_temperature="));
+    Serial.print(p.motor_temperature, 3);
+    Serial.print(F(" voltage="));
+    Serial.print(p.voltage, 3);
     Serial.println();
   };
   print_state();
@@ -153,10 +165,16 @@ void loop() {
     Serial.print(v.velocity, 3);
     Serial.print(F(" torque="));
     Serial.print(v.torque, 3);
-    Serial.print(F(" trajectory_complete="));
-    Serial.print(v.trajectory_complete, 3);
-    Serial.print(F(" absPosition="));
+    Serial.print(F(" q_current="));
+    Serial.print(v.q_current, 3);
+    Serial.print(F(" d_current="));
+    Serial.print(v.d_current, 3);
+    Serial.print(F(" abs_position="));
     Serial.print(v.abs_position, 3);
+    Serial.print(F(" motor_temperature="));
+    Serial.print(v.motor_temperature, 3);
+    Serial.print(F(" voltage="));
+    Serial.print(v.voltage, 3);
     Serial.println();
 
     const auto& p = moteus2.last_result().values;
@@ -168,42 +186,71 @@ void loop() {
     Serial.print(p.velocity, 3);
     Serial.print(F(" torque="));
     Serial.print(p.torque, 3);
-    Serial.print(F(" trajectory_complete="));
-    Serial.print(p.trajectory_complete, 3);
-    Serial.print(F(" absPosition="));
+    Serial.print(F(" q_current="));
+    Serial.print(p.q_current, 3);
+    Serial.print(F(" d_current="));
+    Serial.print(p.d_current, 3);
+    Serial.print(F(" abs_position="));
     Serial.print(p.abs_position, 3);
+    Serial.print(F(" motor_temperature="));
+    Serial.print(p.motor_temperature, 3);
+    Serial.print(F(" voltage="));
+    Serial.print(p.voltage, 3);
     Serial.println();
   };
 
-
   // print_state();
   if(Serial.available()){
+    sendData(1,0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,Serial.readStringUntil('\n').toFloat());
     // HWSERIAL.write(Serial.read());
-    String val = Serial.readStringUntil('\n');
-    if (val.indexOf("stat") != -1){
-      Serial.println(can.available());
-      print_state();
-      return;
-    }
-    int firstIndex = val.indexOf(' ');
-    if(firstIndex == -1){
-      return;
-    }
-    String firstValue = val.substring(0,firstIndex);
-    String secondValue = val.substring(firstIndex+1);
-    double pos1 = firstValue.toFloat();
-    double pos2 = secondValue.toFloat();
-    Serial.println(pos1);
-    Serial.println(pos2);
-    run2(pos1, pos2);
-    print_state();
+    // String val = Serial.readStringUntil('\n');
+    // if (val.indexOf("stat") != -1){
+    //   Serial.println(can.available());
+    //   print_state();
+    //   return;
+    // }
+    // int firstIndex = val.indexOf(' ');
+    // if(firstIndex == -1){
+    //   return;
+    // }
+    // String firstValue = val.substring(0,firstIndex);
+    // String secondValue = val.substring(firstIndex+1);
+    // double pos1 = firstValue.toFloat();
+    // double pos2 = secondValue.toFloat();
+    // Serial.println(pos1);
+    // Serial.println(pos2);
+    // run2(pos1, pos2);
+    // print_state();
   }
 
-  if(HWSERIAL.available()){
-    Serial.println("here");
-    Serial.println(HWSERIAL.read());
-  }
+  if(HWSERIAL.available()>=29){
     
+    // for(int i=0; i<12; i++){
+    //   HWSERIAL.read();
+    // }
+    // uint8_t byteDatas[12];
+    // HWSERIAL.readBytes(byteDatas,12);
+    // Serial.write(byteDatas,12);
+    HWSERIAL.readStringUntil(':');
+    uint8_t byteData;
+    float floatsp[4];
+
+    // 첫 번째 바이트를 읽습니다.
+    byteData = HWSERIAL.read();
+
+    // 이후 4개의 float 데이터를 읽습니다.
+    for (int i = 0; i < 4; i++) {
+        uint8_t bytes[4];
+        for (int j = 0; j < 4; j++) {
+            bytes[3-j] = HWSERIAL.read();  // 각 float 데이터의 바이트를 읽어 배열에 저장
+        }
+        // 바이트 배열을 float로 변환
+        memcpy(&floatsp[i], bytes, sizeof(float));
+    }
+    HWSERIAL.flush();
+
+    
+  }
 }
 
 double GetSPIposition(Moteus a){
@@ -336,7 +383,7 @@ byte wait_for_esp_response(int timeout, char* term=OKrn) {
     if(HWSERIAL.available()) {
       buffer[i++]=HWSERIAL.read();
       if(i>=len) {
-        if(strncmp(buffer+i-len, term, len)==0 || strncmp(buffer+i-len, ">", len)==0) {
+        if(strncmp(buffer+i-len, term, len)==0 || strchr(buffer+i-len, '>') != NULL) {
           found=true;
           break;
         }
@@ -351,7 +398,7 @@ byte wait_for_esp_response(int timeout, char* term=OKrn) {
 
 bool read_till_eol() {
   static int i=0;
-  if(HWSERIAL.available()) {
+  while(HWSERIAL.available()) {
     buffer[i++]=HWSERIAL.read();
     if(i==BUFFER_SIZE)  i=0;
     if(i>1 && buffer[i-2]==13 && buffer[i-1]==10) {
@@ -366,6 +413,10 @@ bool read_till_eol() {
 
 void setupWiFi() {
 
+  HWSERIAL.println("ATE0");
+  wait_for_esp_response(5000);
+  HWSERIAL.println("AT+CIPMUX=1");
+  wait_for_esp_response(5000); 
   HWSERIAL.println("AT+CIPCLOSE=4");
   wait_for_esp_response(5000);
   // turn on echo
@@ -378,8 +429,6 @@ void setupWiFi() {
   // HWSERIAL.println("AT+CWJAP?");
   // wait_for_esp_response(5000); 
   
-  // HWSERIAL.println("AT+CIPMUX=1");
-  // wait_for_esp_response(5000); 
 
 
   HWSERIAL.println("AT+CIPSTART=4,\"UDP\",\"192.168.0.22\",9999,9998,0");
@@ -388,9 +437,7 @@ void setupWiFi() {
   // HWSERIAL.println("AT+CIPSEND=4,7");
   // wait_for_esp_response(5000); 
   // HWSERIAL.write("UDPtest");
-  // wait_for_esp_response(5000); 
-  
-  sendData(1,0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8);
+  // wait_for_esp_response(5000);
 
   // Serial.println("ready");
 }
@@ -412,8 +459,10 @@ void sendData(int motorId, int state, float pos, float i2c_pos, float velocity, 
       memcpy(buffer_data + 4 + i * sizeof(float), &bigEndianValue, sizeof(float));
   }
   HWSERIAL.println("AT+CIPSEND=4,36");
-  wait_for_esp_response(5000); 
-  wait_for_esp_response(5000); 
+  // read_till_eol();
+  // read_till_eol();
+  wait_for_esp_response(100);
+  wait_for_esp_response(100);
   // 버퍼 출력
   // for (int i = 0; i < sizeof(buffer_data); i++) {
   //     HWSERIAL.print(buffer_data[i], HEX);
@@ -425,7 +474,6 @@ void sendData(int motorId, int state, float pos, float i2c_pos, float velocity, 
   }
   Serial.println("");
   wait_for_esp_response(5000);
-
   return 0;
 }
 
