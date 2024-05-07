@@ -234,7 +234,7 @@ void loop() {
   }
 
   if(HWSERIAL.available()>=29){
-    
+    Serial.println("input");
     // for(int i=0; i<12; i++){
     //   HWSERIAL.read();
     // }
@@ -257,8 +257,9 @@ void loop() {
         // 바이트 배열을 float로 변환
         memcpy(&floatsp[i], bytes, sizeof(float));
     }
-    HWSERIAL.flush();
 
+    HWSERIAL.flush();
+  
     Serial.print(byteData);
     Serial.print(" ");
     Serial.print(floatsp[0],4);
@@ -268,6 +269,7 @@ void loop() {
     Serial.print(floatsp[2],4);
     Serial.print(" ");
     Serial.println(floatsp[3],4);
+
     if(byteData == 2){
       pos1 = floatsp[0];
     }else if(byteData == 3){
@@ -276,7 +278,7 @@ void loop() {
     // position_cmd1.velocity = floatsp[1];
     // position_cmd1.maximum_torque = floatsp[2];
     // position_cmd1.stop_position =  floatsp[3];
-    run3(pos1, pos2);
+    // run3(pos1, pos2);
       
   }
   delay(10);
